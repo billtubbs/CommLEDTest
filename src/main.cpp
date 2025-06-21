@@ -1,18 +1,26 @@
+#define USE_OCTOWS2811
+
 #include <Arduino.h>
 #include <SerialComm.h>
+#include <OctoWS2811.h>
 #include <FastLED.h>
 
 // Device names used for serial communications
 #define MY_NAME "MyTeensy1"
 
-// How many leds in your strip?
-#define NUM_LEDS 7
+#define BAUD 57600
+
+#define NUM_LEDS_PER_STRIP 100
+#define NUM_STRIPS 8
 
 // PIN where LEDs are connected
-#define DATA_PIN 6
+#define DATA_PIN 2
 
 // Define the array of leds
-CRGB leds[NUM_LEDS];
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+
+// Pin layouts on the teensy 3:
+// OctoWS2811: 2, 14, 7, 8, 6, 20, 21, 5
 
 // Function prototypes
 void flashBoardLed();
@@ -21,6 +29,9 @@ void processData();
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT); // onboard LED
+
+  // TODO: Is this needed?
+  Serial.begin(BAUD);
 
   // LED arrangement
   FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
@@ -113,7 +124,8 @@ void processData()
         debugToPC(msg_buffer);
         p = &dataRecvd[4];
         for (i=0; i<nLeds; i++) {
-          ledId = (*p++) * 256 + *p++;
+          ledId = *p++;
+          ledId = ledId * 256 + *p++;
           r = *p++;
           g = *p++;
           b = *p++;
@@ -155,7 +167,7 @@ void processData()
     {
       dataSum += (uint32_t) dataRecvd[n];
     }
-    snprintf(msg_buffer, MSG_BUFFER_SIZE, "Checksum: %d", dataSum);
+    snprintf(msg_buffer, MSG_BUFFER_SIZE, "Checksum: %lu", dataSum);
     debugToPC(msg_buffer);
 
     // Report number of bytes received and check-sum to host
