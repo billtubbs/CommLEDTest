@@ -1,26 +1,85 @@
-#define USE_OCTOWS2811
+/*
 
-#include <Arduino.h>
-#include <SerialComm.h>
+    File: main.cpp
+    Author: Bill Tubbs
+    Date: 2025-06-21
+    
+    Description:
+    C++ code for Teensy 3.1 microcontrollers on the 1593 LED 
+    irregular light array.
+ 
+    Uses the OctoWS2811 library by Paul Stoffregen:
+    http://www.pjrc.com/teensy/td_libs_OctoWS2811.html
+
+    This scipt listens for commands coming in on the serial port 
+    (e.g. from a Raspberry Pi) and updates the LED display.
+    
+    The 1593 LED irregular light array contains two Teensy 3.1
+    microcontrollers mounted on OctoWS2811 Adaptor boards for 
+    communication with the 16 led strips (8 on each Teensy) 
+    containing 98 to 100 LEDs per strip.
+
+    Required Connections
+    --------------------
+      pin 2:  LED Strip #1    OctoWS2811 drives 8 LED Strips.
+      pin 14: LED strip #2    All 8 are the same length.
+      pin 7:  LED strip #3
+      pin 8:  LED strip #4    A 100 ohm resistor should used
+      pin 6:  LED strip #5    between each Teensy pin and the
+      pin 20: LED strip #6    wire to the LED strip, to minimize
+      pin 21: LED strip #7    high frequency ringing & noise.
+      pin 5:  LED strip #8
+      pin 15 & 16 - Connect together, but do not use
+      pin 4 - Do not use
+      pin 3 - Do not use as PWM.  Normal use is ok.
+
+*/
+
+// CHANGE THE FOLLOWING LINE WHEN COMPILING AND UPLOADING THIS 
+// CODE TO EITHER TEENSY.
+// Set which Teensy controller the code is for (1 or 2)
+//  - TEENSY1 is usually on usb port 1275401
+//  - TEENSY2 is usually on usb port 6862001
+#define TEENSY1
+
 #include <OctoWS2811.h>
-#include <FastLED.h>
+#include <avr/pgmspace.h>
+#include <stdio.h>
+#include <SerialComm.h>
 
-// Device names used for serial communications
-#define MY_NAME "MyTeensy1"
+#ifdef TEENSY1
+#define MY_NAME "TEENSY1"
+// The following data is specific to the LEDS connected to Teensy #1
+const unsigned short numLeds = 798;
+const unsigned short numberOfStrips = 8;
+const unsigned short ledsPerStrip[] = {100, 98, 100, 100, 100, 100, 100, 100};
+const unsigned short firstLedOfStrip[] = {0, 100, 198, 298, 398, 498, 598, 698, 798};
+const unsigned short maxLedsPerStrip = 100;
+#endif
 
-#define BAUD 57600
+#ifdef TEENSY2
+#define MY_NAME "TEENSY2"
+// The following data is specific to the LEDS connected to Teensy #2
+const unsigned short numLeds = 795;
+const unsigned short numberOfStrips = 8;
+const unsigned short ledsPerStrip[] = {99, 99, 100, 100, 99, 100, 100, 98};
+const unsigned short firstLedOfStrip[] = {0,  99, 198, 298, 398, 497, 597, 697, 795};
+const unsigned short maxLedsPerStrip = 100;
+#endif
 
-#define NUM_LEDS_PER_STRIP 100
-#define NUM_STRIPS 8
 
-// PIN where LEDs are connected
-#define DATA_PIN 2
+// Pin number for on-board LED
+#define BOARDLED 13
 
-// Define the array of leds
-CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
 
-// Pin layouts on the teensy 3:
-// OctoWS2811: 2, 14, 7, 8, 6, 20, 21, 5
+DMAMEM int displayMemory[maxLedsPerStrip*6];
+int drawingMemory[maxLedsPerStrip*6];
+
+// LED strip configuration
+const int config = WS2811_RGB | WS2811_800kHz;
+
+OctoWS2811 leds(maxLedsPerStrip, displayMemory, drawingMemory, config);
+
 
 // Function prototypes
 void flashBoardLed();
@@ -28,13 +87,12 @@ void processData();
 
 void setup()
 {
-  pinMode(LED_BUILTIN, OUTPUT); // onboard LED
+  pinMode(BOARDLED, OUTPUT);
 
-  // TODO: Is this needed?
-  Serial.begin(BAUD);
+  // Note: Serial.begin(BAUD_RATE) is not needed for Teensy
 
-  // LED arrangement
-  FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
+  leds.begin();
+  leds.show();
 
   // The board LED will flash until a connection is established.
   digitalWrite(LED_BUILTIN, HIGH);
@@ -103,7 +161,7 @@ void processData()
         b = dataRecvd[6];
         snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
         debugToPC(msg_buffer);
-        leds[ledId] = CRGB(r, g, b);
+        leds.setPixel(ledId, r, g, b);
       }
     }
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
@@ -111,8 +169,8 @@ void processData()
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
         debugToPC(msg_buffer);
-        for (i=0; i<NUM_LEDS; i++) {
-          leds[i] = CRGB::Black;
+        for (i=0; i<numberOfStrips*maxLedsPerStrip; i++) {
+          leds.setPixel(i, 0, 0, 0);
         }
       }
     }
@@ -129,7 +187,7 @@ void processData()
           r = *p++;
           g = *p++;
           b = *p++;
-          leds[ledId] = CRGB(r, g, b);
+          leds.setPixel(ledId, r, g, b);
         }
       }
     }
@@ -139,11 +197,11 @@ void processData()
         snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
         debugToPC(msg_buffer);
         p = &dataRecvd[2];
-        for (i=0; i<NUM_LEDS; i++) {
+        for (i=0; i<numberOfStrips*maxLedsPerStrip; i++) {
           r = *p++;
           g = *p++;
           b = *p++;
-          leds[i] = CRGB(r, g, b);
+          leds.setPixel(i, r, g, b);
         }
       }
     }
@@ -152,7 +210,7 @@ void processData()
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         snprintf(msg_buffer, MSG_BUFFER_SIZE, "Show LED updates now");
         debugToPC(msg_buffer);
-        FastLED.show();
+        leds.show();
       }
     }
     else {
