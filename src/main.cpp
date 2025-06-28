@@ -54,8 +54,12 @@
 //   (upper half)    | 1  3  5  7 |
 const unsigned short numLeds = 798;
 const unsigned short numberOfStrips = 8;
-const unsigned short ledsPerStrip[] = {100, 98, 100, 100, 100, 100, 100, 100};
-const unsigned short firstLedOfStrip[] = {0, 100, 198, 298, 398, 498, 598, 698, 798};
+// Old version is wrong:
+// const unsigned short ledsPerStrip[] = {100, 98, 100, 100, 100, 100, 100, 100};
+// const unsigned short firstLedOfStrip[] = {0, 100, 198, 298, 398, 498, 598, 698, 798};
+// Based on visually testing LED arrangement:
+const unsigned short ledsPerStrip[] = {100, 100, 98, 100, 100, 100, 100, 100};
+const unsigned short firstLedOfStrip[] = {0, 100, 200, 298, 398, 498, 598, 698, 798};
 const unsigned short maxLedsPerStrip = 100;
 #endif
 
@@ -66,8 +70,12 @@ const unsigned short maxLedsPerStrip = 100;
 //   (lower half)    | 1  3  5  7 |
 const unsigned short numLeds = 795;
 const unsigned short numberOfStrips = 8;
-const unsigned short ledsPerStrip[] = {99, 99, 100, 100, 99, 100, 100, 98};
-const unsigned short firstLedOfStrip[] = {0,  99, 198, 298, 398, 497, 597, 697, 795};
+// Old version is wrong:
+// const unsigned short ledsPerStrip[] = {99, 99, 100, 100, 99, 100, 100, 98};
+// const unsigned short firstLedOfStrip[] = {0,  99, 198, 298, 398, 497, 597, 697, 795};
+// Based on visually testing LED arrangement:
+const unsigned short ledsPerStrip[] = {99, 99, 99, 100, 100, 100, 100, 98};
+const unsigned short firstLedOfStrip[] = {0, 99, 198, 297, 397, 497, 597, 697, 795};
 const unsigned short maxLedsPerStrip = 100;
 #endif
 
@@ -123,7 +131,12 @@ void loop()
 
 void flashBoardLed()
 {
+  #ifdef TEENSY1
   if ((millis() % 1000) > 100)
+  #endif
+  #ifdef TEENSY2
+  if ((millis() % 500) > 100)
+  #endif
   {
     digitalWrite(LED_BUILTIN, LOW);
   }
