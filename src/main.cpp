@@ -50,6 +50,8 @@
 #ifdef TEENSY1
 #define MY_NAME "TEENSY1"
 // The following data is specific to the LEDS connected to Teensy #1
+// Strip arrangement | 0  2  4  6 |
+//   (upper half)    | 1  3  5  7 |
 const unsigned short numLeds = 798;
 const unsigned short numberOfStrips = 8;
 const unsigned short ledsPerStrip[] = {100, 98, 100, 100, 100, 100, 100, 100};
@@ -60,6 +62,8 @@ const unsigned short maxLedsPerStrip = 100;
 #ifdef TEENSY2
 #define MY_NAME "TEENSY2"
 // The following data is specific to the LEDS connected to Teensy #2
+// Strip arrangement | 0  2  4  6 |
+//   (lower half)    | 1  3  5  7 |
 const unsigned short numLeds = 795;
 const unsigned short numberOfStrips = 8;
 const unsigned short ledsPerStrip[] = {99, 99, 100, 100, 99, 100, 100, 98};
