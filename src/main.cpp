@@ -40,7 +40,7 @@
 // Set which Teensy controller the code is for (1 or 2)
 //  - TEENSY1 is usually on usb port 1275401
 //  - TEENSY2 is usually on usb port 6862001
-#define TEENSY2
+#define TEENSY1
 
 #include <OctoWS2811.h>
 #include <avr/pgmspace.h>
@@ -229,7 +229,7 @@ void processData()
       g = dataRecvd[5];
       b = dataRecvd[6];
       if (checkByteDataLength(dataRecvCount, 7 + 2 * nLeds) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%d, %d, %d)", nLeds, r, g, b);
+        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%zu, %zu, %zu)", nLeds, r, g, b);
         debugToPC(msg_buffer);
         p = &dataRecvd[7];
         for (i=0; i<nLeds; i++) {
@@ -245,7 +245,7 @@ void processData()
       g = dataRecvd[3];
       b = dataRecvd[4];
       if (checkByteDataLength(dataRecvCount, 5) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%d, %d, %d), r, g, b");
+        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu, %zu)", r, g, b);
         debugToPC(msg_buffer);
         for (i=0; i<numberOfStrips * maxLedsPerStrip; i++) {
           leds.setPixel(i, r, g, b);
