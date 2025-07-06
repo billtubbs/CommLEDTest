@@ -40,7 +40,7 @@
 // Set which Teensy controller the code is for (1 or 2)
 //  - TEENSY1 is usually on usb port 1275401
 //  - TEENSY2 is usually on usb port 6862001
-#define TEENSY1
+#define TEENSY2
 
 #include <OctoWS2811.h>
 #include <avr/pgmspace.h>
@@ -176,16 +176,16 @@ void processData()
         r = dataRecvd[4];
         g = dataRecvd[5];
         b = dataRecvd[6];
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
+        // debugToPC(msg_buffer);
         leds.setPixel(ledId, r, g, b);
       }
     }
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
       // Command 'LC' received
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
+        // debugToPC(msg_buffer);
         for (i=0; i<numberOfStrips * maxLedsPerStrip; i++) {
           leds.setPixel(i, 0, 0, 0);
         }
@@ -195,8 +195,8 @@ void processData()
       // Command 'LN' received
       nLeds = dataRecvd[2] * 256 + dataRecvd[3];
       if (checkByteDataLength(dataRecvCount, 4 + 5 * nLeds) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of %d LEDs", nLeds);
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of %d LEDs", nLeds);
+        // debugToPC(msg_buffer);
         p = &dataRecvd[4];
         for (i=0; i<nLeds; i++) {
           ledId = *p++;
@@ -211,8 +211,8 @@ void processData()
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'A') {
       // Command 'LA' received
       if (checkByteDataLength(dataRecvCount, 2 + 3 * numberOfStrips * maxLedsPerStrip) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
+        // debugToPC(msg_buffer);
         p = &dataRecvd[2];
         for (i=0; i<numberOfStrips*maxLedsPerStrip; i++) {
           r = *p++;
@@ -229,8 +229,8 @@ void processData()
       g = dataRecvd[5];
       b = dataRecvd[6];
       if (checkByteDataLength(dataRecvCount, 7 + 2 * nLeds) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%zu, %zu, %zu)", nLeds, r, g, b);
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%zu, %zu, %zu)", nLeds, r, g, b);
+        // debugToPC(msg_buffer);
         p = &dataRecvd[7];
         for (i=0; i<nLeds; i++) {
           ledId = *p++;
@@ -245,8 +245,8 @@ void processData()
       g = dataRecvd[3];
       b = dataRecvd[4];
       if (checkByteDataLength(dataRecvCount, 5) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu, %zu)", r, g, b);
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu, %zu)", r, g, b);
+        // debugToPC(msg_buffer);
         for (i=0; i<numberOfStrips * maxLedsPerStrip; i++) {
           leds.setPixel(i, r, g, b);
         }
@@ -255,8 +255,8 @@ void processData()
     else if (dataRecvd[0] == 'S' && dataRecvd[1] == 'N') {
       // Command 'SN' received
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Show LED updates now");
-        debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Show LED updates now");
+        // debugToPC(msg_buffer);
         leds.show();
       }
     }
@@ -272,8 +272,6 @@ void processData()
     {
       dataSum += (uint32_t) dataRecvd[n];
     }
-    snprintf(msg_buffer, MSG_BUFFER_SIZE, "Checksum: %lu", dataSum);
-    debugToPC(msg_buffer);
 
     // Report number of bytes received and check-sum to host
     dataSendCount = 6;
