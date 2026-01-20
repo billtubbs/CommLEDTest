@@ -38,9 +38,9 @@
 // CHANGE THE FOLLOWING LINE WHEN COMPILING AND UPLOADING THIS 
 // CODE TO EITHER TEENSY.
 // Set which Teensy controller the code is for (1 or 2)
-//  - TEENSY1 is usually on usb port 1275401
+//  - TEENSY1 is usually on usb port 12745401
 //  - TEENSY2 is usually on usb port 6862001
-#define TEENSY2
+#define TEENSY1
 
 #include <OctoWS2811.h>
 #include <avr/pgmspace.h>
