@@ -57,7 +57,6 @@ const unsigned short numberOfStrips = 8;
 // Based on visually testing LED arrangement:
 const unsigned short ledsPerStrip[] = {100, 100, 98, 100, 100, 100, 100, 100};
 const unsigned short maxLedsPerStrip = 100;
-unsigned short ledIdx[numLeds];
 #endif
 
 #ifdef TEENSY2
@@ -70,8 +69,10 @@ const unsigned short numberOfStrips = 8;
 // Based on visually testing LED arrangement:
 const unsigned short ledsPerStrip[] = {99, 99, 99, 100, 100, 100, 100, 98};
 const unsigned short maxLedsPerStrip = 100;
-unsigned short ledIdx[numLeds];
 #endif
+
+// Index values to map LED ids to OctoWS2811 index
+unsigned short ledIdx[numLeds];
 
 // Pin number for on-board LED
 #define BOARDLED 13
