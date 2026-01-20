@@ -3,20 +3,20 @@
     File: main.cpp
     Author: Bill Tubbs
     Date: 2025-06-21
-    
+
     Description:
-    C++ code for Teensy 3.1 microcontrollers on the 1593 LED 
+    C++ code for Teensy 3.1 microcontrollers on the 1593 LED
     irregular light array.
- 
+
     Uses the OctoWS2811 library by Paul Stoffregen:
     http://www.pjrc.com/teensy/td_libs_OctoWS2811.html
 
-    This scipt listens for commands coming in on the serial port 
+    This scipt listens for commands coming in on the serial port
     (e.g. from a Raspberry Pi) and updates the LED display.
-    
+
     The 1593 LED irregular light array contains two Teensy 3.1
-    microcontrollers mounted on OctoWS2811 Adaptor boards for 
-    communication with the 16 led strips (8 on each Teensy) 
+    microcontrollers mounted on OctoWS2811 Adaptor boards for
+    communication with the 16 led strips (8 on each Teensy)
     containing 98 to 100 LEDs per strip.
 
     Required Connections
@@ -35,7 +35,7 @@
 
 */
 
-// CHANGE THE FOLLOWING LINE WHEN COMPILING AND UPLOADING THIS 
+// CHANGE THE FOLLOWING LINE WHEN COMPILING AND UPLOADING THIS
 // CODE TO EITHER TEENSY.
 // Set which Teensy controller the code is for (1 or 2)
 //  - TEENSY1 is usually on usb port 12745401
@@ -43,9 +43,9 @@
 #define TEENSY1
 
 #include <OctoWS2811.h>
+#include <SerialComm.h>
 #include <avr/pgmspace.h>
 #include <stdio.h>
-#include <SerialComm.h>
 
 #ifdef TEENSY1
 #define MY_NAME "TEENSY1"
@@ -73,27 +73,26 @@ const unsigned short maxLedsPerStrip = 100;
 unsigned short ledIdx[numLeds];
 #endif
 
-
 // Pin number for on-board LED
 #define BOARDLED 13
 
-
-DMAMEM int displayMemory[maxLedsPerStrip*6];
-int drawingMemory[maxLedsPerStrip*6];
+DMAMEM int displayMemory[maxLedsPerStrip * 6];
+int drawingMemory[maxLedsPerStrip * 6];
 
 // LED strip configuration
 const int config = WS2811_RGB | WS2811_800kHz;
 
 OctoWS2811 leds(maxLedsPerStrip, displayMemory, drawingMemory, config);
 
-
 // Function prototypes
 void flashBoardLed();
 void processData();
-void computeLedIndices(unsigned short* indices, const unsigned short* ledsPerStrip, unsigned short numberOfStrips, unsigned short maxLedsPerStrip);
+void computeLedIndices(unsigned short *indices,
+                       const unsigned short *ledsPerStrip,
+                       unsigned short numberOfStrips,
+                       unsigned short maxLedsPerStrip);
 
-void setup()
-{
+void setup() {
   pinMode(BOARDLED, OUTPUT);
 
   // Note: Serial.begin(BAUD_RATE) is not needed for Teensy
@@ -108,64 +107,54 @@ void setup()
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-void loop()
-{
-  if (Serial)
-  {
-    if (!connEstablished)
-    {
+void loop() {
+  if (Serial) {
+    if (!connEstablished) {
       newConnection(MY_NAME);
       connEstablished = true;
     }
     getSerialData();
     processData();
-  }
-  else
-  {
+  } else {
     connEstablished = false;
     flashBoardLed();
   }
 }
 
-void flashBoardLed()
-{
-  #ifdef TEENSY1
+void flashBoardLed() {
+#ifdef TEENSY1
   if ((millis() % 1000) > 100)
-  #endif
-  #ifdef TEENSY2
-  if ((millis() % 500) > 100)
-  #endif
-  {
-    digitalWrite(LED_BUILTIN, LOW);
-  }
-  else
-  {
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
+#endif
+#ifdef TEENSY2
+    if ((millis() % 500) > 100)
+#endif
+    {
+      digitalWrite(LED_BUILTIN, LOW);
+    } else {
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
 }
 
 uint8_t checkByteDataLength(uint16_t dataRecvCount, uint16_t expectedCount) {
   if (dataRecvCount != expectedCount) {
-    snprintf(msg_buffer, MSG_BUFFER_SIZE, "%d bytes received, %d expected", dataRecvCount, expectedCount);
+    snprintf(msg_buffer, MSG_BUFFER_SIZE, "%d bytes received, %d expected",
+             dataRecvCount, expectedCount);
     debugToPC(msg_buffer);
     return 1;
   }
   return 0;
 }
 
-
-void processData()
-{
+void processData() {
   // processes the data that is in dataRecvd[]
   size_t i, ledId, nLeds;
   uint8_t r, g, b;
-  byte* p;
+  byte *p;
 
-  if (allReceived)
-  {
-    // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Command of length %d bytes received", dataRecvCount);
-    // debugToPC(msg_buffer);
-  
+  if (allReceived) {
+    // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Command of length %d bytes
+    // received", dataRecvCount); debugToPC(msg_buffer);
+
     // Identify command
     if (dataRecvd[0] == 'L' && dataRecvd[1] == '1') {
       // Command 'L1' received
@@ -174,30 +163,28 @@ void processData()
         r = dataRecvd[4];
         g = dataRecvd[5];
         b = dataRecvd[6];
-        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
-        // debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to
+        // (%d, %d, %d)", ledId, r, g, b); debugToPC(msg_buffer);
         leds.setPixel(ledIdx[ledId], r, g, b);
       }
-    }
-    else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
+    } else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
       // Command 'LC' received
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
         // debugToPC(msg_buffer);
-        unsigned short* p = ledIdx;
+        unsigned short *p = ledIdx;
         for (unsigned short i = 0; i < numLeds; i++) {
           leds.setPixel(*p++, 0, 0, 0);
         }
       }
-    }
-    else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'N') {
+    } else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'N') {
       // Command 'LN' received
       nLeds = dataRecvd[2] * 256 + dataRecvd[3];
       if (checkByteDataLength(dataRecvCount, 4 + 5 * nLeds) == 0) {
-        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of %d LEDs", nLeds);
-        // debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of %d LEDs",
+        // nLeds); debugToPC(msg_buffer);
         p = &dataRecvd[4];
-        for (i=0; i<nLeds; i++) {
+        for (i = 0; i < nLeds; i++) {
           ledId = *p++;
           ledId = ledId * 256 + *p++;
           r = *p++;
@@ -206,13 +193,12 @@ void processData()
           leds.setPixel(ledIdx[ledId], r, g, b);
         }
       }
-    }
-    else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'A') {
+    } else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'A') {
       // Command 'LA' received
       if (checkByteDataLength(dataRecvCount, 2 + 3 * numLeds) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
         // debugToPC(msg_buffer);
-        unsigned short* idxPtr = ledIdx;
+        unsigned short *idxPtr = ledIdx;
         p = &dataRecvd[2];
         for (unsigned short i = 0; i < numLeds; i++) {
           r = *p++;
@@ -221,57 +207,53 @@ void processData()
           leds.setPixel(*idxPtr++, r, g, b);
         }
       }
-    }
-    else if (dataRecvd[0] == 'C' && dataRecvd[1] == 'N') {
+    } else if (dataRecvd[0] == 'C' && dataRecvd[1] == 'N') {
       // Command 'CN' received
       nLeds = dataRecvd[2] * 256 + dataRecvd[3];
       r = dataRecvd[4];
       g = dataRecvd[5];
       b = dataRecvd[6];
       if (checkByteDataLength(dataRecvCount, 7 + 2 * nLeds) == 0) {
-        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%zu, %zu, %zu)", nLeds, r, g, b);
-        // debugToPC(msg_buffer);
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs to (%zu, %zu,
+        // %zu)", nLeds, r, g, b); debugToPC(msg_buffer);
         p = &dataRecvd[7];
-        for (i=0; i<nLeds; i++) {
+        for (i = 0; i < nLeds; i++) {
           ledId = *p++;
           ledId = ledId * 256 + *p++;
           leds.setPixel(ledIdx[ledId], r, g, b);
         }
       }
-    }
-    else if (dataRecvd[0] == 'C' && dataRecvd[1] == 'A') {
+    } else if (dataRecvd[0] == 'C' && dataRecvd[1] == 'A') {
       // Command 'CA' received
       r = dataRecvd[2];
       g = dataRecvd[3];
       b = dataRecvd[4];
       if (checkByteDataLength(dataRecvCount, 5) == 0) {
-        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu, %zu)", r, g, b);
-        // debugToPC(msg_buffer);
-        unsigned short* p = ledIdx;
+        // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu,
+        // %zu)", r, g, b); debugToPC(msg_buffer);
+        unsigned short *p = ledIdx;
         for (unsigned short i = 0; i < numLeds; i++) {
           leds.setPixel(*p++, r, g, b);
         }
       }
-    }
-    else if (dataRecvd[0] == 'S' && dataRecvd[1] == 'N') {
+    } else if (dataRecvd[0] == 'S' && dataRecvd[1] == 'N') {
       // Command 'SN' received
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Show LED updates now");
         // debugToPC(msg_buffer);
         leds.show();
       }
-    }
-    else {
+    } else {
       // Report unrecognised command
-      snprintf(msg_buffer, MSG_BUFFER_SIZE, "Invalid command '%c%c'", dataRecvd[0], dataRecvd[1]);
+      snprintf(msg_buffer, MSG_BUFFER_SIZE, "Invalid command '%c%c'",
+               dataRecvd[0], dataRecvd[1]);
       debugToPC(msg_buffer);
     }
 
     // Calculate checksum for data received
     uint32_t dataSum = 0;
-    for (uint16_t n = 0; n < dataRecvCount; n++)
-    {
-      dataSum += (uint32_t) dataRecvd[n];
+    for (uint16_t n = 0; n < dataRecvCount; n++) {
+      dataSum += (uint32_t)dataRecvd[n];
     }
 
     // Report number of bytes received and check-sum to host
@@ -287,12 +269,15 @@ void processData()
   }
 }
 
-void computeLedIndices(unsigned short* indices, const unsigned short* ledsPerStrip, unsigned short numberOfStrips, unsigned short maxLedsPerStrip) {
-    unsigned short idx = 0;
-    for (unsigned short strip = 0; strip < numberOfStrips; strip++) {
-        unsigned short start = strip * maxLedsPerStrip;
-        for (unsigned short led = 0; led < ledsPerStrip[strip]; led++) {
-            indices[idx++] = start + led;
-        }
+void computeLedIndices(unsigned short *indices,
+                       const unsigned short *ledsPerStrip,
+                       unsigned short numberOfStrips,
+                       unsigned short maxLedsPerStrip) {
+  unsigned short idx = 0;
+  for (unsigned short strip = 0; strip < numberOfStrips; strip++) {
+    unsigned short start = strip * maxLedsPerStrip;
+    for (unsigned short led = 0; led < ledsPerStrip[strip]; led++) {
+      indices[idx++] = start + led;
     }
+  }
 }
