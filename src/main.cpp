@@ -54,13 +54,10 @@
 //   (upper half)    | 1  3  5  7 |
 const unsigned short numLeds = 798;
 const unsigned short numberOfStrips = 8;
-// Old version is wrong:
-// const unsigned short ledsPerStrip[] = {100, 98, 100, 100, 100, 100, 100, 100};
-// const unsigned short firstLedOfStrip[] = {0, 100, 198, 298, 398, 498, 598, 698, 798};
 // Based on visually testing LED arrangement:
 const unsigned short ledsPerStrip[] = {100, 100, 98, 100, 100, 100, 100, 100};
-const unsigned short firstLedOfStrip[] = {0, 100, 200, 298, 398, 498, 598, 698, 798};
 const unsigned short maxLedsPerStrip = 100;
+unsigned short ledIdx[numLeds];
 #endif
 
 #ifdef TEENSY2
@@ -70,13 +67,10 @@ const unsigned short maxLedsPerStrip = 100;
 //   (lower half)    | 1  3  5  7 |
 const unsigned short numLeds = 795;
 const unsigned short numberOfStrips = 8;
-// Old version is wrong:
-// const unsigned short ledsPerStrip[] = {99, 99, 100, 100, 99, 100, 100, 98};
-// const unsigned short firstLedOfStrip[] = {0,  99, 198, 298, 398, 497, 597, 697, 795};
 // Based on visually testing LED arrangement:
 const unsigned short ledsPerStrip[] = {99, 99, 99, 100, 100, 100, 100, 98};
-const unsigned short firstLedOfStrip[] = {0, 99, 198, 297, 397, 497, 597, 697, 795};
 const unsigned short maxLedsPerStrip = 100;
+unsigned short ledIdx[numLeds];
 #endif
 
 
@@ -96,6 +90,7 @@ OctoWS2811 leds(maxLedsPerStrip, displayMemory, drawingMemory, config);
 // Function prototypes
 void flashBoardLed();
 void processData();
+void computeLedIndices(unsigned short* indices, const unsigned short* ledsPerStrip, unsigned short numberOfStrips, unsigned short maxLedsPerStrip);
 
 void setup()
 {
@@ -105,6 +100,9 @@ void setup()
 
   leds.begin();
   leds.show();
+
+  // Compute unique index for fast LED addressing
+  computeLedIndices(ledIdx, ledsPerStrip, numberOfStrips, maxLedsPerStrip);
 
   // The board LED will flash until a connection is established.
   digitalWrite(LED_BUILTIN, HIGH);
@@ -178,7 +176,7 @@ void processData()
         b = dataRecvd[6];
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
         // debugToPC(msg_buffer);
-        leds.setPixel(ledId, r, g, b);
+        leds.setPixel(ledIdx[ledId], r, g, b);
       }
     }
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
@@ -186,8 +184,9 @@ void processData()
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
         // debugToPC(msg_buffer);
-        for (i=0; i<numberOfStrips * maxLedsPerStrip; i++) {
-          leds.setPixel(i, 0, 0, 0);
+        unsigned short* p = ledIdx;
+        for (unsigned short i = 0; i < numLeds; i++) {
+          leds.setPixel(*p++, 0, 0, 0);
         }
       }
     }
@@ -204,7 +203,7 @@ void processData()
           r = *p++;
           g = *p++;
           b = *p++;
-          leds.setPixel(ledId, r, g, b);
+          leds.setPixel(ledIdx[ledId], r, g, b);
         }
       }
     }
@@ -213,14 +212,13 @@ void processData()
       if (checkByteDataLength(dataRecvCount, 2 + 3 * numLeds) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
         // debugToPC(msg_buffer);
+        unsigned short* idxPtr = ledIdx;
         p = &dataRecvd[2];
-        for (size_t strip=0; strip<numberOfStrips; strip++) {
-          for (size_t led=0; led<ledsPerStrip[strip]; led++) {
-            r = *p++;
-            g = *p++;
-            b = *p++;
-            leds.setPixel(strip * maxLedsPerStrip + led, r, g, b);
-          }
+        for (unsigned short i = 0; i < numLeds; i++) {
+          r = *p++;
+          g = *p++;
+          b = *p++;
+          leds.setPixel(*idxPtr++, r, g, b);
         }
       }
     }
@@ -237,7 +235,7 @@ void processData()
         for (i=0; i<nLeds; i++) {
           ledId = *p++;
           ledId = ledId * 256 + *p++;
-          leds.setPixel(ledId, r, g, b);
+          leds.setPixel(ledIdx[ledId], r, g, b);
         }
       }
     }
@@ -249,8 +247,9 @@ void processData()
       if (checkByteDataLength(dataRecvCount, 5) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs to (%zu, %zu, %zu)", r, g, b);
         // debugToPC(msg_buffer);
-        for (i=0; i<numberOfStrips * maxLedsPerStrip; i++) {
-          leds.setPixel(i, r, g, b);
+        unsigned short* p = ledIdx;
+        for (unsigned short i = 0; i < numLeds; i++) {
+          leds.setPixel(*p++, r, g, b);
         }
       }
     }
@@ -288,3 +287,12 @@ void processData()
   }
 }
 
+void computeLedIndices(unsigned short* indices, const unsigned short* ledsPerStrip, unsigned short numberOfStrips, unsigned short maxLedsPerStrip) {
+    unsigned short idx = 0;
+    for (unsigned short strip = 0; strip < numberOfStrips; strip++) {
+        unsigned short start = strip * maxLedsPerStrip;
+        for (unsigned short led = 0; led < ledsPerStrip[strip]; led++) {
+            indices[idx++] = start + led;
+        }
+    }
+}
