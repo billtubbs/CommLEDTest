@@ -165,8 +165,8 @@ void processData()
 
   if (allReceived)
   {
-    snprintf(msg_buffer, MSG_BUFFER_SIZE, "Command of length %d bytes received", dataRecvCount);
-    debugToPC(msg_buffer);
+//     snprintf(msg_buffer, MSG_BUFFER_SIZE, "Command of length %d bytes received", dataRecvCount);
+//     debugToPC(msg_buffer);
   
     // Identify command
     if (dataRecvd[0] == 'L' && dataRecvd[1] == '1') {
@@ -176,13 +176,13 @@ void processData()
         r = dataRecvd[4];
         g = dataRecvd[5];
         b = dataRecvd[6];
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to (%d, %d, %d)", ledId, r, g, b);
+        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set LED %d to (%d, %d, %d)", ledId, r, g, b);
         debugToPC(msg_buffer);
         leds.setPixel(ledId, r, g, b);
       }
     }
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
-      // Command 'LN' received
+      // Command 'LC' received
       if (checkByteDataLength(dataRecvCount, 2) == 0) {
         snprintf(msg_buffer, MSG_BUFFER_SIZE, "Clear all LEDs");
         debugToPC(msg_buffer);
@@ -195,7 +195,7 @@ void processData()
       nLeds = dataRecvd[2] * 256 + dataRecvd[3];
       // Command 'LN' received
       if (checkByteDataLength(dataRecvCount, 4 + 5 * nLeds) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of %d LEDs", nLeds);
+        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set %d LEDs", nLeds);
         debugToPC(msg_buffer);
         p = &dataRecvd[4];
         for (i=0; i<nLeds; i++) {
@@ -211,7 +211,7 @@ void processData()
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'A') {
       // Command 'LA' received
       if (checkByteDataLength(dataRecvCount, 2 + 3 * 7) == 0) {
-        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
+        snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set all LEDs");
         debugToPC(msg_buffer);
         p = &dataRecvd[2];
         for (i=0; i<numberOfStrips*maxLedsPerStrip; i++) {
