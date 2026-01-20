@@ -210,15 +210,17 @@ void processData()
     }
     else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'A') {
       // Command 'LA' received
-      if (checkByteDataLength(dataRecvCount, 2 + 3 * numberOfStrips * maxLedsPerStrip) == 0) {
+      if (checkByteDataLength(dataRecvCount, 2 + 3 * numLeds) == 0) {
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of all LEDs");
         // debugToPC(msg_buffer);
         p = &dataRecvd[2];
-        for (i=0; i<numberOfStrips*maxLedsPerStrip; i++) {
-          r = *p++;
-          g = *p++;
-          b = *p++;
-          leds.setPixel(i, r, g, b);
+        for (size_t strip=0; strip<numberOfStrips; strip++) {
+          for (size_t led=0; led<ledsPerStrip[strip]; led++) {
+            r = *p++;
+            g = *p++;
+            b = *p++;
+            leds.setPixel(strip * maxLedsPerStrip + led, r, g, b);
+          }
         }
       }
     }
