@@ -106,6 +106,10 @@ void setup() {
 
   // The board LED will flash until a connection is established.
   digitalWrite(LED_BUILTIN, HIGH);
+
+  // Trigger LED system initialization to avoid delay on first command
+  leds.setPixel(0, 0, 0, 0);
+  leds.show();
 }
 
 void loop() {
