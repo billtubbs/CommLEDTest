@@ -239,7 +239,7 @@ void processData()
         }
       }
     }
-    else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
+    else if (dataRecvd[0] == 'C' && dataRecvd[1] == 'A') {
       // Command 'CA' received
       r = dataRecvd[2];
       g = dataRecvd[3];
