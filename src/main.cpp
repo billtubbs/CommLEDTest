@@ -170,7 +170,7 @@ void processData() {
         b = dataRecvd[6];
         // snprintf(msg_buffer, MSG_BUFFER_SIZE, "Set the colour of LED %d to
         // (%d, %d, %d)", ledId, r, g, b); debugToPC(msg_buffer);
-        leds.setPixel(ledIdx[ledId], r, g, b);
+        // leds.setPixel(ledIdx[ledId], r, g, b);  // Temporarily commented out to test delay
       }
     } else if (dataRecvd[0] == 'L' && dataRecvd[1] == 'C') {
       // Command 'LC' received

@@ -1,5 +1,6 @@
 .gitignore
 .DS_Store
 .pio
-.vscode/*
+.vscode
+.clang-format
 *.code-workspace
