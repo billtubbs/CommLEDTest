@@ -2,3 +2,4 @@
 .DS_Store
 .pio
 .vscode/*
+*.code-workspace
